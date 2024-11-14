@@ -1,16 +1,18 @@
 //Franco Pedrazzi y Luca Wlodarczyk
-import { useState, React } from 'react';
+import { useState, React, useContext } from 'react';
 import './SingUpAndLogin.css';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { getFirestore, doc, setDoc } from 'firebase/firestore';
 import { app } from './db';
+import { Account } from '../AppContext';
 
 
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 function Signup() {
-  const [Acount, SetAcount] = useState({
+  const {AccountData, SetAccountData}=useContext(Account)
+  const [MakingAccount, SetMakingAccount] = useState({
     Name: "",
     LastName: "",
     Age: "",
@@ -33,9 +35,9 @@ function Signup() {
   const AddDataUser = async (id) => {
     console.log(id);
     await setDoc(doc(db, "Users", id), {
-      name: Acount.Name,
-      LastName: Acount.LastName,
-      Age: Acount.Age
+      name: MakingAccount.Name,
+      LastName: MakingAccount.LastName,
+      Age: MakingAccount.Age
     });
   };
 
@@ -46,7 +48,7 @@ function Signup() {
       const dataName = DatasNames[i];
 
 
-      if (Acount[dataName] === "") {
+      if (MakingAccount[dataName] === "") {
         SetError({ ...error, [dataName]: "Complete este valor" });
         return;
       } else {
@@ -54,22 +56,22 @@ function Signup() {
       }
     }
 
-    if (Acount.Password !== Acount.CPassword) {
+    if (MakingAccount.Password !== MakingAccount.CPassword) {
       SetError({ ...error, CPassword: "La contraseña no coincide" });
       return; 
     }
     
-    await createUserWithEmailAndPassword(auth, Acount.Gmail, Acount.Password)
+    await createUserWithEmailAndPassword(auth, MakingAccount.Gmail, MakingAccount.Password)
       .catch((error) => {
         const errorMessage = error.message;
         if (errorMessage === "Firebase: Error (auth/email-already-in-use).") {
           SetError({ ...error, Gmail: "La cuenta ya está en uso" });
         }
       });
-      await signInWithEmailAndPassword(auth, Acount.Gmail, Acount.Password)
+      await signInWithEmailAndPassword(auth, MakingAccount.Gmail, MakingAccount.Password)
       .then((userCredential) => {
         AddDataUser(userCredential["user"].uid)
-        props.send(userCredential["user"].uid)
+        SetAccountData({id:userCredential["user"].uid})
       })
       .catch(() => {
         SetError("No se a podido acceder a tu cuenta verifica la contraseña y el mail")
@@ -80,8 +82,8 @@ function Signup() {
     let name = event.target.name;
     let value = event.target.value;
 
-    SetAcount({
-      ...Acount, [name]: value
+    SetMakingAccount({
+      ...MakingAccount, [name]: value
     });
 
     if (value !== "") {

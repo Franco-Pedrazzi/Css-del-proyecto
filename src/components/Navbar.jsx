@@ -1,28 +1,34 @@
 import './Navbar.css';
 import './SingUpAndLogin.css'
 import Login from "./Login";
-import { useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import Signup from "./Signup";
 import {doc, getDoc } from "firebase/firestore";
 import { db } from './db';
 import icon from "../../public/img/LogoV3.svg"
+import { Account } from '../AppContext';
 
 function Navbar() {
+  const {AccountData, SetAccountData}=useContext(Account)
     const [SignupIsOpen, SetSignupIsOpen] = useState(false);
     const [LoginIsOpen, SetLoginIsOpen] = useState(false);
-    const [IdAcount, SetIdAcount] = useState(localStorage.getItem("IdAcount"))
-    const [Acount, SetAcount] = useState("")
+
+useEffect(()=>{
+  console.log(AccountData.length)
+  SetAccountData(localStorage.getItem("Account"))
+},[])
     const log=() => {
-      if(Acount!=""){
+      if(AccountData.length>1){
         return
       }
-     localStorage.setItem("IdAcount", IdAcount);
+
         async function fetchData() {
           try {
-            const docRef = doc(db, "Users", IdAcount);
+            const docRef = doc(db, "Users", AccountData.id);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
-                SetAcount(docSnap.data());
+              SetAccountData(docSnap.data());
+                localStorage.setItem("Account", Account);
             } else {
               console.log("No se encontró el documento");
             }
@@ -40,8 +46,8 @@ function Navbar() {
             {LoginIsOpen && <div className='background' onClick={() => SetLoginIsOpen(false)}>
                 .
             </div>}
-            {SignupIsOpen && <Signup send={SetIdAcount}></Signup>}
-            {LoginIsOpen && <Login send={SetIdAcount}></Login>}
+            {SignupIsOpen && <Signup ></Signup>}
+            {LoginIsOpen && <Login ></Login>}
             <img id="logo" src={icon} ></img>
             <ul>
                 <li><a className='buttonNav' href="/">Home</a></li>
@@ -50,15 +56,15 @@ function Navbar() {
                 <li><a className='buttonNav' href="/Preguntas">Questions</a></li>
                 <li><a className='buttonNav' href="#">Favorites</a></li>
             </ul>
-            {IdAcount=="" ||  IdAcount=="null"? (
+            {AccountData.length<=1? (
                 <div>
-                <button onClick={() => SetLoginIsOpen(true)} id="Login">Login</button>
+             
                 <button onClick={() => { SetSignupIsOpen(true) }} id="register">Signup</button>
             </div>
             ) : (
                 <div>
                 {log()}
-                <h3>{Acount.name} <img style={{width:"50px",height:"25px"}} src="../public/img/user-icon.webp"/></h3>
+                <h3>{AccountData.name} <img style={{width:"50px",height:"25px"}} src="../public/img/user-icon.webp"/></h3>
             </div>
             )
                 

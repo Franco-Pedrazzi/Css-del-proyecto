@@ -2,7 +2,7 @@
 import { useState, React, useContext } from 'react';
 import './SingUpAndLogin.css';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { getFirestore, doc, setDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc,getDoc } from 'firebase/firestore';
 import { app } from './db';
 import { Account } from '../AppContext';
 
@@ -31,7 +31,24 @@ function Signup() {
   });
 
   const DatasNames = ["Name", "LastName", "Age", "Gmail", "Password", "CPassword"];
-
+  const log=(id) => {
+    console.log(id)
+    async function fetchData() {
+      try {
+        const docRef = doc(db, "Users", id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          SetAccountData(docSnap.data());
+          localStorage.setItem("Account", JSON.stringify(docSnap.data()));
+        } else {
+          console.log("No se encontró el documento");
+        }
+      } catch (error) {
+        console.error("Error al obtener el documento:", error);
+      }
+    }
+    fetchData();
+  };
   const AddDataUser = async (id) => {
     console.log(id);
     await setDoc(doc(db, "Users", id), {
@@ -64,14 +81,16 @@ function Signup() {
     await createUserWithEmailAndPassword(auth, MakingAccount.Gmail, MakingAccount.Password)
       .catch((error) => {
         const errorMessage = error.message;
+        console.log(error.message);
         if (errorMessage === "Firebase: Error (auth/email-already-in-use).") {
           SetError({ ...error, Gmail: "La cuenta ya está en uso" });
         }
       });
+
       await signInWithEmailAndPassword(auth, MakingAccount.Gmail, MakingAccount.Password)
       .then((userCredential) => {
         AddDataUser(userCredential["user"].uid)
-        SetAccountData({id:userCredential["user"].uid})
+        log(userCredential["user"].uid)
       })
       .catch(() => {
         SetError("No se a podido acceder a tu cuenta verifica la contraseña y el mail")

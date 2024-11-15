@@ -1,21 +1,43 @@
-import { useState, React } from 'react';
+import { useState, React, useContext } from 'react';
 import './SingUpAndLogin.css'
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'
 import { app } from './db';
+import { doc, getDoc } from "firebase/firestore";
+import { db } from './db';
 const auth = getAuth(app)
-
-function Login(props) {
-
-  const [Acount, SetAcount] = useState({
+import { Account } from '../AppContext';
+function Login() {
+  const { AccountData, SetAccountData } = useContext(Account)
+  const [LoadingAccount, SetLoadingAccount] = useState({
     Gmail: "",
     Password: ""
   })
   const [error, SetError] = useState("")
+  const log = (id) => {
+    console.log(id)
+    async function fetchData() {
+      try {
+        const docRef = doc(db, "Users", id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          SetAccountData(docSnap.data());
+
+          localStorage.setItem("Account", JSON.stringify(docSnap.data()));
+
+        } else {
+          console.log("No se encontró el documento");
+        }
+      } catch (error) {
+        console.error("Error al obtener el documento:", error);
+      }
+    }
+    fetchData();
+  };
   const Submit = (event) => {
     event.preventDefault()
-    signInWithEmailAndPassword(auth, Acount.Gmail, Acount.Password)
+    signInWithEmailAndPassword(auth, LoadingAccount.Gmail, LoadingAccount.Password)
       .then((userCredential) => {
-        props.send(userCredential["user"].uid)
+        log(userCredential["user"].uid)
       })
       .catch(() => {
         SetError("No se ha podido acceder a tu cuenta verifica la contraseña y el mail")
@@ -25,8 +47,8 @@ function Login(props) {
   const Handle = (event) => {
     let name = event.target.name
     let value = event.target.value
-    SetAcount({
-      ...Acount, [name]: value
+    SetLoadingAccount({
+      ...LoadingAccount, [name]: value
     })
   }
   return (
